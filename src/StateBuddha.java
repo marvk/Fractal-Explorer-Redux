@@ -82,7 +82,7 @@ public class StateBuddha extends State {
     }
 
     protected void draw(int[] pixels) {
-        int maxCount = -1;
+        int maxCount = 0;
 
         for (int i : numHits) {
             maxCount = Math.max(i, maxCount);
