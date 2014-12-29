@@ -1,11 +1,13 @@
+import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.Observable;
 
 /**
  * Created by Marvin on 22.12.2014.
  */
-public class Controller {
+public class Controller extends Observable {
     private FractalFrame frame;
     private State state;
 
@@ -34,9 +36,10 @@ public class Controller {
         frame.addMouseListener(a);
         frame.addMouseWheelListener(a);
 
-        state = new StateMandel(this);
-    }
+        addObserver(frame);
 
+        setState(new StateMandel(this));
+    }
 
     public void repaint() {
         frame.repaint();
@@ -48,5 +51,7 @@ public class Controller {
 
     public void setState(State state) {
         this.state = state;
+        setChanged();
+        notifyObservers();
     }
 }

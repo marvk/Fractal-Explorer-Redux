@@ -1,3 +1,10 @@
+import javax.swing.*;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.plaf.DimensionUIResource;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
@@ -10,12 +17,16 @@ import java.util.ArrayList;
 public class StateMandel extends State {
     private double xOff, yOff, scale;
     private final int escapeRadius = 4;
+    private int colorRepititions;
     private int[] colors;
     private boolean hasChanged;
+    private int red, green, blue;
 
     public StateMandel(Controller controller) {
         super(controller);
+        this.red = this.green = this.blue = 255;
         this.iterations = 200;
+        this.colorRepititions = 1;
         this.xOff = 0;
         this.yOff = 0;
         this.scale = 4;
@@ -23,8 +34,6 @@ public class StateMandel extends State {
         render();
     }
 
-
-    //TODO doesn't center properly
     @Override
     protected void mouseClicked(MouseEvent e) {
         if (e.getButton() != MouseEvent.BUTTON1) return;
@@ -42,15 +51,82 @@ public class StateMandel extends State {
         render();
     }
 
+    @Override
+    public JPanel getControlPanel() {
+        JPanel panel = new JPanel();
+
+        JPanel spinnerPanel = new JPanel(new GridLayout(0, 2));
+        spinnerPanel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Values"));
+
+        JSpinner iterationSpinner = new JSpinner(new SpinnerNumberModel(iterations, 50, 6553600, 50));
+        iterationSpinner.addChangeListener(e -> {
+            iterations = (int) iterationSpinner.getValue();
+            hasChanged = true;
+            render();
+        });
+
+        JSpinner renderScaleSpinner = new JSpinner(new SpinnerNumberModel(renderScale, 1, 8, 1));
+        renderScaleSpinner.addChangeListener(e -> {
+            renderScale = (int) renderScaleSpinner.getValue();
+            hasChanged = true;
+            render();
+        });
+
+        JSpinner colorRepSpinner = new JSpinner(new SpinnerNumberModel(colorRepititions, 1, 10, 1));
+        colorRepSpinner.addChangeListener(e -> {
+            colorRepititions = (int) colorRepSpinner.getValue();
+            hasChanged = true;
+            render();
+        });
+
+        JSpinner redSpinner = new JSpinner(new SpinnerNumberModel(red, 0, 255, 1));
+        redSpinner.addChangeListener(e -> {
+            red = (int) redSpinner.getValue();
+            hasChanged = true;
+            render();
+        });
+
+        JSpinner greenSpinner = new JSpinner(new SpinnerNumberModel(green, 0, 255, 1));
+        greenSpinner.addChangeListener(e -> {
+            green = (int) greenSpinner.getValue();
+            hasChanged = true;
+            render();
+        });
+
+        JSpinner blueSpinner = new JSpinner(new SpinnerNumberModel(blue, 0, 255, 1));
+        blueSpinner.addChangeListener(e -> {
+            blue = (int) blueSpinner.getValue();
+            hasChanged = true;
+            render();
+        });
+
+        spinnerPanel.add(new JLabel("Iterations"));
+        spinnerPanel.add(iterationSpinner);
+        spinnerPanel.add(new JLabel("Render Scale"));
+        spinnerPanel.add(renderScaleSpinner);
+        spinnerPanel.add(new JLabel("Color repititions"));
+        spinnerPanel.add(colorRepSpinner);
+        spinnerPanel.add(new JLabel("Red"));
+        spinnerPanel.add(redSpinner);
+        spinnerPanel.add(new JLabel("Green"));
+        spinnerPanel.add(greenSpinner);
+        spinnerPanel.add(new JLabel("Blue"));
+        spinnerPanel.add(blueSpinner);
+
+        panel.add(spinnerPanel);
+        panel.revalidate();
+        return panel;
+    }
+
     private int[] generateColors() {
         int[] result = new int[iterations];
 
         for (int i = 0; i < iterations; i++) {
-            double f = ((float) i / (float) iterations) * Math.PI * 2f * 3f;
+            double f = ((float) i / (float) iterations) * Math.PI * 2f * colorRepititions;
 
-            int r = (int) (Math.sin(f + 2f) * 127f + 128f);
-            int g = (int) (Math.sin(f) * 127f + 128f);
-            int b = (int) (Math.sin(f + 4f) * 127f + 128f);
+            int r = (int) (Math.sin(f + 2f) * (float)(red/2) + (float)(1+(red/2)));
+            int g = (int) (Math.sin(f) * (float)(green/2) + (float)(1+(green/2)));
+            int b = (int) (Math.sin(f + 4f) * (float)(blue/2) + (float)(1+(blue/2)));
 
             result[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
         }
@@ -120,8 +196,8 @@ public class StateMandel extends State {
 
         @Override
         public void run() {
-            int w = controller.width;
-            int h = controller.height;
+            int w = controller.width*renderScale;
+            int h = controller.height*renderScale;
 
             double cR, cI, x, y, xNew;
             int k;

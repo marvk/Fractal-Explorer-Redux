@@ -22,7 +22,7 @@ public class FractalPanel extends JPanel {
         g2.drawRect(0, 0, getWidth(), getHeight());
 
         try {
-            BufferedImage image = controller.getState().getImage();
+            BufferedImage image = controller.getState().getResizedImage();
             g2.drawImage(image, 0, 0, null);
         } catch (NullPointerException ignored) {
         }
