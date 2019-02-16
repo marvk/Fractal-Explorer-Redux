@@ -129,7 +129,7 @@ public class StateBuddha extends State {
         long time = System.nanoTime();
         pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 
-        Timer timer = new Timer(1000/10, e -> {
+        Timer timer = new Timer(1000 / 10, e -> {
             draw(pixels);
             controller.repaint();
             progressBar.setValue(counter.get());
@@ -157,7 +157,7 @@ public class StateBuddha extends State {
                     t.setTerminate(true);
                 threads.clear();
 
-                progressBar.setValue((long)numPoints);
+                progressBar.setValue((long) numPoints);
             }
         }).start();
     }
@@ -202,7 +202,7 @@ public class StateBuddha extends State {
             Random random = new Random(0);
             double cR, cI;
 
-            for (int i = 0; i < numPoints;) {
+            for (int i = 0; i < numPoints; ) {
                 if (terminate) return;
                 cR = (random.nextFloat() * 3.0f) - 2.0f;
                 cI = (random.nextFloat() * 3.0f) - 1.5f;

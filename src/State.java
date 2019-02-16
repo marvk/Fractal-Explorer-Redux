@@ -15,7 +15,9 @@ public abstract class State {
     protected ArrayList<RenderThread> threads;
     protected int renderScale;
 
-    protected static GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+    protected static GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                                                                   .getDefaultScreenDevice()
+                                                                   .getDefaultConfiguration();
 
     public State(Controller controller) {
         this.controller = controller;
@@ -49,7 +51,7 @@ public abstract class State {
     protected abstract void render();
 
     protected BufferedImage getNewBufferedImage() {
-        return gc.createCompatibleImage(controller.width*renderScale, controller.height*renderScale);
+        return gc.createCompatibleImage(controller.width * renderScale, controller.height * renderScale);
     }
 
     protected BufferedImage resizeImage(BufferedImage image) {

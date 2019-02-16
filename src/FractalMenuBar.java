@@ -7,10 +7,8 @@ import java.io.IOException;
  * Created by Marvin on 22.12.2014.
  */
 public class FractalMenuBar extends JMenuBar {
-    private Controller controller;
 
     public FractalMenuBar(Controller controller) {
-        this.controller = controller;
 
         JMenu menuMenu = new JMenu("Menu");
         JMenu fractalMenu = new JMenu("Fractals");
@@ -47,7 +45,6 @@ public class FractalMenuBar extends JMenuBar {
         });
         fractalGroup.add(buddhaItem);
         fractalMenu.add(buddhaItem);
-
 
         JRadioButtonMenuItem antiBuddhaItem = new JRadioButtonMenuItem("Anti-Buddhabrot");
         antiBuddhaItem.addActionListener(e -> {

@@ -123,9 +123,9 @@ public class StateMandel extends State {
         for (int i = 0; i < iterations; i++) {
             double f = ((float) i / (float) iterations) * Math.PI * 2f * colorRepetitions;
 
-            int r = (int) (Math.sin(f + 2f) * (float)(red/2) + (float)(1+(red/2)));
-            int g = (int) (Math.sin(f) * (float)(green/2) + (float)(1+(green/2)));
-            int b = (int) (Math.sin(f + 4f) * (float)(blue/2) + (float)(1+(blue/2)));
+            int r = (int) (Math.sin(f + 2f) * (float) (red / 2) + (float) (1 + (red / 2)));
+            int g = (int) (Math.sin(f) * (float) (green / 2) + (float) (1 + (green / 2)));
+            int b = (int) (Math.sin(f + 4f) * (float) (blue / 2) + (float) (1 + (blue / 2)));
 
             result[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
         }
@@ -195,8 +195,8 @@ public class StateMandel extends State {
 
         @Override
         public void run() {
-            int w = controller.width*renderScale;
-            int h = controller.height*renderScale;
+            int w = controller.width * renderScale;
+            int h = controller.height * renderScale;
 
             double cR, cI, x, y, xNew;
             int k;

@@ -26,20 +26,20 @@ public class PercentageProgressBar extends JProgressBar {
             return;
         }
 
-        setValue((int) (((double) n / (double) longMax)*100));
+        setValue((int) (((double) n / (double) longMax) * 100));
 
-        long millis = (System.nanoTime()-renderStarted)/1000000L;
+        long millis = (System.nanoTime() - renderStarted) / 1000000L;
 
         String time = "";
 
         if (longMax > 0 && millis > 0) {
-            millis = (long)(((double)(longMax-n)/(double)longMax)*millis);
+            millis = (long) (((double) (longMax - n) / (double) longMax) * millis);
 
-            millis = (long)(millis*(1/((double)n/(double)longMax)));
+            millis = (long) (millis * (1 / ((double) n / (double) longMax)));
 
             time = String.format("%dm, %ds remaining",
                     TimeUnit.MILLISECONDS.toMinutes(millis),
-                    TimeUnit.MILLISECONDS.toSeconds(millis)-TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis))
+                    TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis))
             );
         }
 
