@@ -42,11 +42,22 @@ public class FractalMenuBar extends JMenuBar {
         buddhaItem.addActionListener(e -> {
             if (!(controller.getState() instanceof StateBuddha)) {
                 controller.getState().terminate();
-                controller.setState(new StateBuddha(controller));
+                controller.setState(new StateBuddha(controller, false));
             }
         });
         fractalGroup.add(buddhaItem);
         fractalMenu.add(buddhaItem);
+
+
+        JRadioButtonMenuItem antiBuddhaItem = new JRadioButtonMenuItem("Anti-Buddhabrot");
+        antiBuddhaItem.addActionListener(e -> {
+            if (!(controller.getState() instanceof StateBuddha)) {
+                controller.getState().terminate();
+                controller.setState(new StateBuddha(controller, true));
+            }
+        });
+        fractalGroup.add(antiBuddhaItem);
+        fractalMenu.add(antiBuddhaItem);
 
         add(menuMenu);
         add(fractalMenu);

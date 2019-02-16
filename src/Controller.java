@@ -42,6 +42,7 @@ public class Controller extends Observable {
     }
 
     public void repaint() {
+        frame.revalidate();
         frame.repaint();
     }
 

@@ -1,9 +1,6 @@
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.plaf.DimensionUIResource;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -17,20 +14,20 @@ import java.util.ArrayList;
 public class StateMandel extends State {
     private double xOff, yOff, scale;
     private final int escapeRadius = 4;
-    private int colorRepititions;
+    private int colorRepetitions;
     private int[] colors;
     private boolean hasChanged;
     private int red, green, blue;
 
     public StateMandel(Controller controller) {
         super(controller);
-        this.red = this.green = this.blue = 255;
-        this.iterations = 200;
-        this.colorRepititions = 1;
-        this.xOff = 0;
-        this.yOff = 0;
-        this.scale = 4;
-        this.hasChanged = true;
+        red = this.green = this.blue = 255;
+        iterations = 200;
+        colorRepetitions = 1;
+        xOff = 0;
+        yOff = 0;
+        scale = 4;
+        hasChanged = true;
         render();
     }
 
@@ -53,10 +50,12 @@ public class StateMandel extends State {
 
     @Override
     public JPanel getControlPanel() {
-        JPanel panel = new JPanel();
+        GridBagConstraints gc = new GridBagConstraints();
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setPreferredSize(new Dimension(300, controller.height));
 
         JPanel spinnerPanel = new JPanel(new GridLayout(0, 2));
-        spinnerPanel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Values"));
+        spinnerPanel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Mandel Settings"));
 
         JSpinner iterationSpinner = new JSpinner(new SpinnerNumberModel(iterations, 50, 6553600, 50));
         iterationSpinner.addChangeListener(e -> {
@@ -72,9 +71,9 @@ public class StateMandel extends State {
             render();
         });
 
-        JSpinner colorRepSpinner = new JSpinner(new SpinnerNumberModel(colorRepititions, 1, 10, 1));
+        JSpinner colorRepSpinner = new JSpinner(new SpinnerNumberModel(colorRepetitions, 1, 10, 1));
         colorRepSpinner.addChangeListener(e -> {
-            colorRepititions = (int) colorRepSpinner.getValue();
+            colorRepetitions = (int) colorRepSpinner.getValue();
             hasChanged = true;
             render();
         });
@@ -113,7 +112,7 @@ public class StateMandel extends State {
         spinnerPanel.add(new JLabel("Blue"));
         spinnerPanel.add(blueSpinner);
 
-        panel.add(spinnerPanel);
+        panel.add(spinnerPanel, gc);
         panel.revalidate();
         return panel;
     }
@@ -122,7 +121,7 @@ public class StateMandel extends State {
         int[] result = new int[iterations];
 
         for (int i = 0; i < iterations; i++) {
-            double f = ((float) i / (float) iterations) * Math.PI * 2f * colorRepititions;
+            double f = ((float) i / (float) iterations) * Math.PI * 2f * colorRepetitions;
 
             int r = (int) (Math.sin(f + 2f) * (float)(red/2) + (float)(1+(red/2)));
             int g = (int) (Math.sin(f) * (float)(green/2) + (float)(1+(green/2)));

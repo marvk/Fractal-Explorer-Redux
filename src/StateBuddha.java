@@ -4,10 +4,10 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by Marvin on 23.12.2014.
@@ -15,18 +15,27 @@ import java.util.Random;
 public class StateBuddha extends State {
     private int numPoints;
     private int[] numHits;
-    private int colorCap;
     private int minIterations;
     private int exposure;
     private int[] pixels;
+    private PercentageProgressBar progressBar;
+    private AtomicLong counter;
+    private boolean anti;
 
-    public StateBuddha(Controller controller) {
+    public StateBuddha(Controller controller, boolean anti) {
         super(controller);
         iterations = 100;
         numPoints = 100000000;
-        colorCap = 10;
         minIterations = 3;
-        exposure = 10;
+        renderScale = 1;
+        exposure = 1;
+        this.anti = anti;
+
+        progressBar = new PercentageProgressBar();
+        progressBar.setEnabled(true);
+        progressBar.setStringPainted(true);
+        counter = new AtomicLong();
+
         render();
     }
 
@@ -42,12 +51,14 @@ public class StateBuddha extends State {
 
     @Override
     public JPanel getControlPanel() {
-        JPanel panel = new JPanel();
+        GridBagConstraints gc = new GridBagConstraints();
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setPreferredSize(new Dimension(300, controller.height));
 
         JPanel spinnerPanel = new JPanel(new GridLayout(0, 2));
-        spinnerPanel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Values"));
+        spinnerPanel.setBorder(new TitledBorder(new EtchedBorder(EtchedBorder.LOWERED), "Buddha Settings"));
 
-        JSpinner iterationSpinner = new JSpinner(new SpinnerNumberModel(iterations, 50, 6553600, 50));
+        JSpinner iterationSpinner = new JSpinner(new SpinnerNumberModel(iterations, 1, 6553600, 50));
         iterationSpinner.addChangeListener(e -> {
             iterations = (int) iterationSpinner.getValue();
         });
@@ -67,7 +78,7 @@ public class StateBuddha extends State {
             numPoints = (int) numPointsSpinner.getValue();
         });
 
-        JSpinner exposureSpinner = new JSpinner(new SpinnerNumberModel(exposure, 1, 1000, 1));
+        JSpinner exposureSpinner = new JSpinner(new SpinnerNumberModel(exposure, 1, 100000, 1));
         exposureSpinner.addChangeListener(e -> {
             exposure = (int) exposureSpinner.getValue();
         });
@@ -80,7 +91,8 @@ public class StateBuddha extends State {
 
         JButton redrawButton = new JButton("Redraw");
         redrawButton.addActionListener(e -> {
-
+            draw(pixels);
+            controller.repaint();
         });
 
         spinnerPanel.add(new JLabel("Iterations"));
@@ -96,32 +108,36 @@ public class StateBuddha extends State {
         spinnerPanel.add(rerenderButton);
         spinnerPanel.add(redrawButton);
 
-        panel.add(spinnerPanel);
+        gc.gridy = 0;
+        panel.add(spinnerPanel, gc);
+        gc.gridy = 1;
+        panel.add(progressBar, gc);
         panel.revalidate();
         return panel;
     }
 
     @Override
     protected void render() {
-        numHits = new int[controller.width * controller.height];
+        progressBar.start();
+        progressBar.setLongMax(numPoints);
+        counter.set(0);
+        image = getNewBufferedImage();
+        numHits = new int[controller.width * renderScale * controller.height * renderScale];
 
         this.threads = new ArrayList<>();
 
         long time = System.nanoTime();
         pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
 
-        Timer timer = new Timer(1000, e -> {
+        Timer timer = new Timer(1000/10, e -> {
             draw(pixels);
             controller.repaint();
+            progressBar.setValue(counter.get());
         });
         timer.setInitialDelay(0);
         timer.start();
 
-        for (int i = 0; i < controller.processors; i++) {
-            RenderThreadBuddha t = new RenderThreadBuddha(iterations, minIterations, numPoints / controller.processors);
-            threads.add(t);
-            t.start();
-        }
+        startThreads();
 
         new Thread(() -> {
             try {
@@ -130,9 +146,9 @@ public class StateBuddha extends State {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                System.out.println("Done");
                 timer.stop();
-                System.out.println(((System.nanoTime() - time) / 1000000f));
+
+                System.out.println("Rendered in " + ((System.nanoTime() - time) / 1000000f) + "ms");
 
                 draw(pixels);
                 controller.repaint();
@@ -140,18 +156,27 @@ public class StateBuddha extends State {
                 for (RenderThread t : threads)
                     t.setTerminate(true);
                 threads.clear();
+
+                progressBar.setValue((long)numPoints);
             }
         }).start();
     }
 
+    private void startThreads() {
+        for (int i = 0; i < controller.processors; i++) {
+            RenderThreadBuddha t = new RenderThreadBuddha(iterations, minIterations, numPoints / controller.processors, anti);
+            threads.add(t);
+            t.start();
+        }
+    }
+
     protected void draw(int[] pixels) {
-        System.out.println("ayy" + exposure);
         int maxCount = 0;
 
         for (int i : numHits) maxCount = Math.max(i, maxCount);
-
-        for (int i = 0; i < controller.width * controller.height; i++) {
-            int c = (int)(((float) numHits[i] / ((float) maxCount / exposure))*255f);
+        Random r = new Random();
+        for (int i = 0; i < pixels.length; i++) {
+            int c = Math.min((int) (((float) numHits[i] / ((float) maxCount / ((float) exposure))) * 255f), 255);
             pixels[i] = c << 16 | c << 8 | c;
         }
     }
@@ -160,11 +185,16 @@ public class StateBuddha extends State {
         private int iterations;
         private int numPoints;
         private int minIterations;
+        private int w, h;
+        private boolean anti;
 
-        public RenderThreadBuddha(int iterations, int minIterations, int numPoints) {
+        public RenderThreadBuddha(int iterations, int minIterations, int numPoints, boolean anti) {
             this.iterations = iterations;
             this.minIterations = minIterations;
             this.numPoints = numPoints;
+            this.w = controller.width * renderScale;
+            this.h = controller.height * renderScale;
+            this.anti = anti;
         }
 
         @Override
@@ -172,22 +202,27 @@ public class StateBuddha extends State {
             Random random = new Random(0);
             double cR, cI;
 
-            for (int i = 0; i < numPoints; i++) {
+            for (int i = 0; i < numPoints;) {
                 if (terminate) return;
                 cR = (random.nextFloat() * 3.0f) - 2.0f;
                 cI = (random.nextFloat() * 3.0f) - 1.5f;
 
-                //Check if point is within the cardiodic
-                double q = ((cR - (1f / 4f)) * (cR - (1f / 4f))) + (cI * cI);
-                if (((q * (q + (cR - (1f/4f))))<(1f/4f)*(cI*cI)))
-                    continue;
+                if (!anti) {
+                    //Check if point is within the cardiodic
+                    double q = ((cR - (1f / 4f)) * (cR - (1f / 4f))) + (cI * cI);
+                    if (((q * (q + (cR - (1f / 4f)))) < (1f / 4f) * (cI * cI)))
+                        continue;
 
-                //Check if point is within the period-2 bulb
-                if (((cR+1)*(cR+1)+(cI*cI) < (1f/16f)))
-                    continue;
+                    //Check if point is within the period-2 bulb
+                    if (((cR + 1) * (cR + 1) + (cI * cI) < (1f / 16f)))
+                        continue;
+                }
 
-                if (iterate(cR, cI, false))
+                if (iterate(cR, cI, false)) {
                     iterate(cR, cI, true);
+                    counter.incrementAndGet();
+                    i++;
+                }
             }
         }
 
@@ -204,23 +239,21 @@ public class StateBuddha extends State {
                 yNew = (2 * x * y) + cI;
 
                 if (draw && i > minIterations) {
-                    pX = (int) (controller.width * (x + 2f) / 4f);
-                    pY = (int) (controller.height * (y + 2f) / 4f);
+                    pX = (int) (w * (x + 2f) / 4f);
+                    pY = (int) (h * (y + 2f) / 4f);
 
-                    if (pX >= 0 && pX < controller.width && pY >= 0 && pY < controller.height) {
-                        numHits[pX * controller.height + pY]++;
+                    if (pX >= 0 && pX < w && pY >= 0 && pY < h) {
+                        numHits[pX * h + pY]++;
                     }
                 }
 
-
-                if (xNew * xNew + yNew * yNew > 4) return true;
+                if (xNew * xNew + yNew * yNew > 4) return !anti;
 
                 x = xNew;
                 y = yNew;
             }
 
-
-            return false;
+            return anti;
         }
     }
 }
